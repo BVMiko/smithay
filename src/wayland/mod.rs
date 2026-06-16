@@ -64,6 +64,7 @@ pub mod drm_syncobj;
 pub mod fifo;
 pub mod fixes;
 pub mod foreign_toplevel_list;
+pub mod foreign_toplevel_management;
 pub mod fractional_scale;
 pub mod idle_inhibit;
 pub mod idle_notify;
