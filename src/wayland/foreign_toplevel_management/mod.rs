@@ -2,6 +2,47 @@
 //!
 //! This protocol lets clients list and request actions on compositor-managed
 //! toplevels, such as taskbars and docks.
+//!
+//! ```no_run
+//! use smithay::wayland::foreign_toplevel_management::{
+//!     ForeignToplevelManagementHandler, ForeignToplevelManagerState, ForeignToplevelState,
+//! };
+//!
+//! pub struct State {
+//!     foreign_toplevel_manager: ForeignToplevelManagerState,
+//! }
+//!
+//! smithay::delegate_dispatch2!(State);
+//!
+//! impl ForeignToplevelManagementHandler for State {
+//!     fn foreign_toplevel_manager_state(&mut self) -> &mut ForeignToplevelManagerState {
+//!         &mut self.foreign_toplevel_manager
+//!     }
+//! }
+//!
+//! # let mut display = wayland_server::Display::<State>::new().unwrap();
+//! # let display_handle = display.handle();
+//! let mut state = State {
+//!     foreign_toplevel_manager: ForeignToplevelManagerState::new::<State>(&display_handle),
+//! };
+//!
+//! let handle = state.foreign_toplevel_manager.new_toplevel_with_details::<State>(
+//!     "Window Title",
+//!     "com.example",
+//!     vec![ForeignToplevelState::Activated],
+//!     Vec::new(),
+//!     None,
+//! );
+//!
+//! // Handle can be used to update title, app id, state, outputs, and parent.
+//! handle.send_title("Window title has changed");
+//! handle.send_state(vec![ForeignToplevelState::Maximized]);
+//! handle.send_done();
+//!
+//! // Handle can also be used to close the window, after this call the handle will become inert,
+//! // and the handle will no longer be announced to clients.
+//! handle.send_closed();
+//! ```
 
 use std::sync::{Arc, Mutex, Weak as StdWeak};
 
@@ -541,6 +582,10 @@ impl ForeignToplevelManagerState {
     }
 
     /// Remove the toplevel, and send the closed event if needed.
+    ///
+    /// The compositor owns strong [`ForeignToplevelHandle`]s: call this method
+    /// or drop the last handle to close a toplevel; [`Self::cleanup_closed_handles`]
+    /// only removes stale weak entries.
     pub fn remove_toplevel(&mut self, handle: &ForeignToplevelHandle) {
         handle.send_closed();
 
@@ -667,10 +712,6 @@ where
         _data_init: &mut DataInit<'_, D>,
     ) {
         if self.is_closed() {
-            if let zwlr_foreign_toplevel_handle_v1::Request::Destroy = request {
-                return;
-            }
-
             return;
         }
 
