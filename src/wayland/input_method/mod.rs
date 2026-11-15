@@ -100,6 +100,11 @@ pub trait InputMethodHandler {
 
     /// Sets the parent location so the popup surface can be placed correctly
     fn parent_geometry(&self, parent: &WlSurface) -> Rectangle<i32, Logical>;
+
+    /// The input method was activated for a text input on `surface`: one was enabled, or enabled
+    /// again while already enabled, which clients send to ask for the input panel again (e.g. a tap
+    /// on the focused text field).
+    fn input_method_activated(&mut self, _surface: &WlSurface) {}
 }
 
 /// Extends [Seat] with input method functionality
@@ -214,6 +219,7 @@ where
                         popup_repositioned: D::popup_repositioned,
                         new_popup: D::new_popup,
                         dismiss_popup: D::dismiss_popup,
+                        activated: D::input_method_activated,
                     },
                 );
                 handle.add_instance(&instance);

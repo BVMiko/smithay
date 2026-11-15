@@ -126,8 +126,9 @@ impl InputMethodHandle {
         self.with_input_method(|im| {
             if let Some(instance) = im.instance.as_ref() {
                 instance.object.activate();
+                let data = instance.object.data::<InputMethodUserData<D>>().unwrap();
+                (data.activated)(state, surface);
                 if let Some(popup) = im.popup_handle.surface.as_mut() {
-                    let data = instance.object.data::<InputMethodUserData<D>>().unwrap();
                     let location = (data.popup_geometry_callback)(state, surface);
                     // Remove old popup.
                     (data.dismiss_popup)(state, popup.clone());
@@ -173,6 +174,7 @@ pub struct InputMethodUserData<D: SeatHandler> {
     pub(crate) new_popup: fn(&mut D, PopupSurface),
     pub(crate) popup_repositioned: fn(&mut D, PopupSurface),
     pub(crate) dismiss_popup: fn(&mut D, PopupSurface),
+    pub(crate) activated: fn(&mut D, &WlSurface),
 }
 
 impl<D: SeatHandler> fmt::Debug for InputMethodUserData<D> {
