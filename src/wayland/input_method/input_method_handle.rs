@@ -100,6 +100,12 @@ impl InputMethodHandle {
         keyboard.grab.is_some()
     }
 
+    /// The focused text input's cursor rectangle, in its surface's coordinates, as the client
+    /// last set it (kept while the input method is deactivated).
+    pub fn text_input_rectangle(&self) -> Rectangle<i32, Logical> {
+        self.inner.lock().unwrap().popup_handle.rectangle
+    }
+
     pub(crate) fn set_text_input_rectangle<D: SeatHandler + 'static>(
         &self,
         state: &mut D,
