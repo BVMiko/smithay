@@ -147,8 +147,9 @@ impl InputMethodHandle {
 
     /// Deactivate the active input method.
     ///
-    /// The `done` is always send when deactivating IME.
-    pub(crate) fn deactivate_input_method<D: SeatHandler + 'static>(&self, state: &mut D) {
+    /// The `done` is always send when deactivating IME. A compositor can call it to hide the input
+    /// panel while the text input stays enabled; the client's next enable activates it again.
+    pub fn deactivate_input_method<D: SeatHandler + 'static>(&self, state: &mut D) {
         self.with_input_method(|im| {
             if let Some(instance) = im.instance.as_mut() {
                 instance.object.deactivate();
