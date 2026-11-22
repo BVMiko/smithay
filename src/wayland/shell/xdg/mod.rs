@@ -1956,6 +1956,17 @@ impl PopupSurface {
     ) {
         let _span = trace_span!("xdg-popup pre-commit", surface = %surface.id()).entered();
 
+        // A surface whose xdg_popup was destroyed has no role object left to validate against; GTK
+        // commits a null buffer to it right after destroying the popup.
+        if !state
+            .xdg_shell_state()
+            .known_popups
+            .iter()
+            .any(|handle| handle.wl_surface == *surface)
+        {
+            return;
+        }
+
         let res = compositor::with_states(surface, |states| {
             let mut role = states
                 .data_map
